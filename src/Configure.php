@@ -58,6 +58,10 @@ class Configure
         $config->BBCodes->addCustom('[left]{TEXT}[/left]', '<div class="bb-left"><xsl:apply-templates/></div>');
         $config->BBCodes->addCustom('[right]{TEXT}[/right]', '<div class="bb-right"><xsl:apply-templates/></div>');
 
+        $config->BBCodes->addCustom('[login]{TEXT}[/login]', '<div class="bb-hide bb-hide--login"><xsl:apply-templates/></div>');
+        $config->BBCodes->addCustom('[like]{TEXT}[/like]',   '<div class="bb-hide bb-hide--like"><xsl:apply-templates/></div>');
+        $config->BBCodes->addCustom('[reply]{TEXT}[/reply]', '<div class="bb-hide bb-hide--reply"><xsl:apply-templates/></div>');
+
 $config->plugins->load('PipeTables');
     }
 
