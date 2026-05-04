@@ -47,6 +47,23 @@ function replaceRange(node, from, to, text) {
   node.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
+function isTiptap(ed: any): boolean {
+  return !!(ed && ed.editor && typeof ed.editor.state !== 'undefined');
+}
+
+function getSelectedText(node: any, ed: any, start: number, end: number): string {
+  if (node) return node.value.slice(start, end);
+  return ed?.editor?.state?.doc?.textBetween(start, end, ' ') ?? '';
+}
+
+function replaceRangeUnified(node: any, ed: any, start: number, end: number, text: string) {
+  if (node) {
+    replaceRange(node, start, end, text);
+  } else {
+    ed.insertBetween(start, end, text, true);
+  }
+}
+
 app.initializers.add('forumaker-magicbb-buttons', () => {
   extend(TextEditor.prototype, 'toolbarItems', function (items) {
     const el = () => elOf(this);
@@ -60,8 +77,24 @@ app.initializers.add('forumaker-magicbb-buttons', () => {
         e?.preventDefault?.();
         const node = el();
         const ed = editor();
-        if (!node || !ed) return;
+        if (!ed) return;
 
+        if (isTiptap(ed)) {
+          const [start, end] = ed.getSelectionRange();
+          const hasSelection = start !== end;
+          const prefix = style.prefix || '';
+          const suffix = style.suffix || '';
+          if (!hasSelection) {
+            ed.insertAtCursor(prefix + (defaultText || '') + suffix, true);
+          } else {
+            const selected = getSelectedText(node, ed, start, end);
+            replaceRangeUnified(node, ed, start, end, prefix + selected + suffix);
+          }
+          return;
+        }
+
+        // Textarea mode — original behaviour
+        if (!node) return;
         const hasSelection = node.selectionStart !== node.selectionEnd;
         if (!hasSelection && defaultText) {
           ed.insertAtCursor((style.prefix || '') + defaultText + (style.suffix || ''));
@@ -84,31 +117,42 @@ app.initializers.add('forumaker-magicbb-buttons', () => {
       const handler = (e) => {
         e?.preventDefault?.();
         const node = el();
-        if (!node) return;
+        const ed = editor();
+        if (!ed) return;
 
+        const open = `[${tag}]`;
+        const close = `[/${tag}]`;
+
+        if (isTiptap(ed)) {
+          const [start, end] = ed.getSelectionRange();
+          if (start === end) {
+            ed.insertAtCursor(open + close, true);
+          } else {
+            const selected = getSelectedText(node, ed, start, end);
+            replaceRangeUnified(node, ed, start, end, `${open}${selected}${close}`);
+          }
+          return;
+        }
+
+        // Textarea mode — original behaviour
+        if (!node) return;
         const start = node.selectionStart;
         const end = node.selectionEnd;
 
         if (start === end) {
-          const open = `[${tag}]`;
-          const close = `[/${tag}]`;
           const insert = open + close;
-
           node.setRangeText(insert, start, start, 'end');
           node.dispatchEvent(new Event('input', { bubbles: true }));
-
           const cursor = start + open.length;
-
           requestAnimationFrame(() => {
             node.focus();
             node.setSelectionRange(cursor, cursor);
           });
-
           return;
         }
 
         const selected = node.value.slice(start, end);
-        const wrapped = `[${tag}]${selected}[/${tag}]`;
+        const wrapped = `${open}${selected}${close}`;
         replaceRange(node, start, end, wrapped);
       };
 
@@ -151,13 +195,26 @@ app.initializers.add('forumaker-magicbb-buttons', () => {
         onSelect: (hex) => {
           const node = el();
           const ed = editor();
-          if (!node || !ed) return;
+          if (!ed) return;
 
+          const prefix = `[color=${hex}]`;
+          const suffix = '[/color]';
+
+          if (isTiptap(ed)) {
+            const [start, end] = ed.getSelectionRange();
+            if (start === end) {
+              ed.insertAtCursor(`${prefix}Heading${suffix}`, true);
+            } else {
+              const selected = getSelectedText(node, ed, start, end);
+              replaceRangeUnified(node, ed, start, end, `${prefix}${selected}${suffix}`);
+            }
+            return;
+          }
+
+          if (!node) return;
           const hasSelection = node.selectionStart !== node.selectionEnd;
-          const style = { prefix: `[color=${hex}]`, suffix: '[/color]' };
-
-          if (!hasSelection) ed.insertAtCursor(`${style.prefix}Heading${style.suffix}`);
-          else styleSelectedText(node, style);
+          if (!hasSelection) ed.insertAtCursor(`${prefix}Heading${suffix}`);
+          else styleSelectedText(node, { prefix, suffix });
         },
       });
 
@@ -196,7 +253,7 @@ app.initializers.add('forumaker-magicbb-buttons', () => {
         if (!ed?.insertAtCursor) return;
         const tpl =
           '| Heading 1 | Heading 2 | Heading 3 |\n|---|---|---|\n| Cell 1 | Cell 2 | Cell 3 |\n| Cell 4 | Cell 5 | Cell 6 |';
-        ed.insertAtCursor(tpl);
+        ed.insertAtCursor(tpl, true);
       };
 
       pool.push({
@@ -218,13 +275,25 @@ app.initializers.add('forumaker-magicbb-buttons', () => {
         onSelect: (a) => {
           const node = el();
           const ed = editor();
-          if (!node || !ed) return;
+          if (!ed) return;
 
-          const hasSelection = node.selectionStart !== node.selectionEnd;
           const tag = a.key;
           const prefix = `[${tag} title=Heading font=${a.font} bg=${a.bg} border=${a.border}]`;
           const suffix = `[/${tag}]`;
 
+          if (isTiptap(ed)) {
+            const [start, end] = ed.getSelectionRange();
+            if (start === end) {
+              ed.insertAtCursor(`${prefix}Subtitle${suffix}`, true);
+            } else {
+              const selected = getSelectedText(node, ed, start, end);
+              replaceRangeUnified(node, ed, start, end, `${prefix}${selected}${suffix}`);
+            }
+            return;
+          }
+
+          if (!node) return;
+          const hasSelection = node.selectionStart !== node.selectionEnd;
           if (!hasSelection) ed.insertAtCursor(`${prefix}Subtitle${suffix}`);
           else styleSelectedText(node, { prefix, suffix });
         },
@@ -253,16 +322,26 @@ app.initializers.add('forumaker-magicbb-buttons', () => {
         e?.preventDefault?.();
         const node = el();
         const ed = editor();
-        if (!node || !ed?.insertAtCursor) return;
+        if (!ed?.insertAtCursor) return;
 
-        const hasSelection = node.selectionStart !== node.selectionEnd;
-        if (hasSelection) {
-          const selected = node.value.slice(node.selectionStart, node.selectionEnd).trim();
-          const tag = `[audio src=${selected}][/audio]`;
-          replaceRange(node, node.selectionStart, node.selectionEnd, tag);
+        if (isTiptap(ed)) {
+          const [start, end] = ed.getSelectionRange();
+          if (start !== end) {
+            const selected = getSelectedText(node, ed, start, end).trim();
+            replaceRangeUnified(node, ed, start, end, `[audio src=${selected}][/audio]`);
+          } else {
+            ed.insertAtCursor('[audio src=url][/audio]', true);
+          }
           return;
         }
 
+        if (!node) return;
+        const hasSelection = node.selectionStart !== node.selectionEnd;
+        if (hasSelection) {
+          const selected = node.value.slice(node.selectionStart, node.selectionEnd).trim();
+          replaceRange(node, node.selectionStart, node.selectionEnd, `[audio src=${selected}][/audio]`);
+          return;
+        }
         ed.insertAtCursor('[audio src=url][/audio]');
       };
 
@@ -286,12 +365,24 @@ app.initializers.add('forumaker-magicbb-buttons', () => {
         onPick: (align) => {
           const node = el();
           const ed = editor();
-          if (!node || !ed) return;
+          if (!ed) return;
 
           const wrap = (tag) => ({ prefix: `[${tag}]`, suffix: `[/${tag}]` });
           const style =
             align === 'left' ? wrap('ileft') : align === 'right' ? wrap('iright') : wrap('icenter');
 
+          if (isTiptap(ed)) {
+            const [start, end] = ed.getSelectionRange();
+            if (start !== end) {
+              const selected = getSelectedText(node, ed, start, end);
+              replaceRangeUnified(node, ed, start, end, `${style.prefix}${selected}${style.suffix}`);
+            } else {
+              ed.insertAtCursor(`${style.prefix}upl-image-preview uuid${style.suffix}`, true);
+            }
+            return;
+          }
+
+          if (!node) return;
           const hasSelection = node.selectionStart !== node.selectionEnd;
 
           if (hasSelection) {
