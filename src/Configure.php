@@ -220,7 +220,8 @@ class Configure
     {
         $config->BBCodes->addCustom(
             '[anchor={IDENTIFIER}]',
-            '<span id="magicbb-{@anchor}" class="bb-anchor"></span>'
+            '<span id="magicbb-{@anchor}" class="bb-anchor"></span>',
+            ['tagName' => 'MAGICBB_ANCHOR']
         );
 
         $config->BBCodes->addCustom(
