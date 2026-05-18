@@ -2,6 +2,7 @@
 
 namespace forumaker\MagicBB;
 
+use forumaker\MagicBB\FixAnchorCollision;
 use forumaker\MagicBB\HideContent;
 use forumaker\MagicBB\Listener\AssertIframePermission;
 use Flarum\Extend;
@@ -10,7 +11,8 @@ use Flarum\Post\Event\Saving as PostSaving;
 return [
     (new Extend\Formatter())
         ->configure(Configure::class)
-        ->render(HideContent::class),
+        ->render(HideContent::class)
+        ->render(FixAnchorCollision::class),
 
     new Extend\Locales(__DIR__ . '/resources/locale'),
 

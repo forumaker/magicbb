@@ -229,9 +229,14 @@ class Configure
 
     protected function addAnchorBBCodes(Configurator $config): void
     {
+        // Register our span template under a unique tag name.
+        // MediaEmbed (anchor.fm) will overwrite the ANCHOR BBCode later, but our
+        // MAGICBB_ANCHOR tag+template persists. The FixAnchorCollision render callback
+        // then rewrites <ANCHOR> XML nodes that came from our BBCode to <MAGICBB_ANCHOR>.
         $config->BBCodes->addCustom(
             '[anchor={SIMPLETEXT}]',
-            '<span class="bb-anchor"><xsl:attribute name="id">magicbb-<xsl:value-of select="@anchor"/></xsl:attribute></span>'
+            '<span class="bb-anchor"><xsl:attribute name="id">magicbb-<xsl:value-of select="@anchor"/></xsl:attribute></span>',
+            ['tagName' => 'MAGICBB_ANCHOR']
         );
 
         $config->BBCodes->addCustom(
