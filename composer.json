@@ -1,6 +1,6 @@
 {
   "name": "forumaker/magicbb",
-  "description": "MagicBB adds handy buttons, extra BBCodes and new text formatting styles",
+  "description": "Adds handy buttons, extra BBCodes and new text formatting styles",
   "type": "flarum-extension",
   "keywords": ["flarum", "flarum-extension", "bbcode", "formatting", "composer", "toolbar", "magic"],
   "license": "MIT",
@@ -14,6 +14,7 @@
     {
       "name": "forumaker",
       "role": "Developer",
+      "email": "arsenyuxw@gmail.com",
       "homepage": "https://github.com/forumaker"
     }
   ],
@@ -34,7 +35,7 @@
       "title": "Magic BBCodes",
       "category": "formatting",
       "icon": {
-        "name": "fas fa-wand-magic-sparkles",
+        "name": "fas fa-wand-sparkles",
         "backgroundColor": "#6A5ACD",
         "color": "#ffffff"
       }
