@@ -1,7 +1,7 @@
 import app from 'flarum/forum/app';
-import Application from 'flarum/common/Application';
 import { extend } from 'flarum/common/extend';
 import TextEditor from 'flarum/common/components/TextEditor';
+import Post from 'flarum/common/models/Post';
 import styleSelectedText from 'flarum/common/utils/styleSelectedText';
 
 import Component from 'flarum/common/Component';
@@ -495,36 +495,42 @@ app.initializers.add('forumaker-magicbb-buttons', () => {
 });
 
 app.initializers.add('forumaker-magicbb-live-reveal', () => {
+  // Track in-flight refetches so a like and a reply landing close together don't
+  // trigger duplicate requests for the same post.
+  const pending = new Set<string>();
+
   function refetchPost(id: string) {
-    app.store.find('posts', id).then(() => m.redraw()).catch(() => {});
+    if (pending.has(id)) return;
+    pending.add(id);
+    app.store
+      .find('posts', id)
+      .then(() => m.redraw())
+      .catch(() => {})
+      .finally(() => pending.delete(id));
   }
 
-  extend(Application.prototype, 'request', function (result: Promise<any>, options: any) {
-    const method: string = (options?.method ?? 'GET').toUpperCase();
-    const url: string = options?.url ?? '';
+  // Hook Post.prototype.save directly instead of the app-wide request pipeline:
+  // likes and replies both resolve through a Post model save, so this only reacts
+  // to post-related traffic rather than every API call (search, notifications,
+  // user updates, etc). The refetch fires as soon as the save promise resolves —
+  // the server has already committed the change by then, so no artificial delay
+  // is needed.
+  extend(Post.prototype, 'save', function (this: any, result: Promise<any>) {
+    result?.then?.(() => {
+      const id = this.id ? String(this.id()) : null;
+      if (!id) return;
 
-    if (method === 'GET') return;
+      // The post that was just liked may need its own hidden content re-rendered.
+      if (document.querySelector(`[data-id="${id}"] .bb-hide`)) {
+        refetchPost(id);
+      }
 
-    const postMatch = url.match(/\/posts\/(\d+)/);
-    if (postMatch) {
-      const id = postMatch[1];
-      result?.then?.(() => {
-        if (document.querySelector(`[data-id="${id}"] .bb-hide`)) {
-          setTimeout(() => refetchPost(id), 250);
-        }
+      // A new reply can unlock [reply]-gated content on other visible posts.
+      document.querySelectorAll('[data-id] .bb-hide--reply').forEach((el) => {
+        const pid = el.closest('[data-id]')?.getAttribute('data-id');
+        if (pid) refetchPost(pid);
       });
-    }
-
-    if (method === 'POST' && /\/posts$/.test(url)) {
-      result?.then?.(() => {
-        setTimeout(() => {
-          document.querySelectorAll('[data-id] .bb-hide--reply').forEach((el) => {
-            const id = el.closest('[data-id]')?.getAttribute('data-id');
-            if (id) refetchPost(id);
-          });
-        }, 800);
-      });
-    }
+    });
   });
 });
 

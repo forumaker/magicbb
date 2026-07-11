@@ -6,7 +6,6 @@ use Flarum\Http\RequestUtil;
 use Flarum\Post\CommentPost;
 use Flarum\Post\Post;
 use Flarum\User\User;
-use Illuminate\Database\ConnectionInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
 use s9e\TextFormatter\Renderer;
@@ -14,13 +13,12 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 class HideContent
 {
-    private static array $likedCache = [];
-    private static array $repliedCache = [];
+    private array $likedCache = [];
+    private array $repliedCache = [];
 
     public function __construct(
         protected TranslatorInterface $translator,
         protected LoggerInterface     $logger,
-        protected ConnectionInterface $db,
     ) {}
 
     public function __invoke(
@@ -86,29 +84,30 @@ class HideContent
         $aid = (int) $actor->id;
         $did = (int) $post->discussion_id;
 
-        if (!array_key_exists($did, self::$likedCache[$aid] ?? [])) {
+        if (!array_key_exists($did, $this->likedCache[$aid] ?? [])) {
+            $ids = [];
+
+            // flarum/likes is optional and registers the likes() relation on
+            // CommentPost as a macro (not a real method), so it can't be probed with
+            // method_exists()/class_exists(). Attempt the query through the model
+            // layer and fall back gracefully if the relation isn't registered.
             try {
-                $ids = $this->db
-                    ->table('post_likes')
-                    ->join('posts', 'posts.id', '=', 'post_likes.post_id')
-                    ->where('posts.discussion_id', $did)
-                    ->where('post_likes.user_id', $aid)
-                    ->pluck('post_likes.post_id')
+                $ids = Post::where('discussion_id', $did)
+                    ->whereHas('likes', fn ($q) => $q->where('id', $aid))
+                    ->pluck('id')
                     ->map(fn ($v) => (int) $v)
                     ->all();
-
-                self::$likedCache[$aid][$did] = $ids;
             } catch (\Throwable $e) {
                 $this->logger->warning(
                     'forumaker-magicbb: could not load likes for discussion — is flarum/likes installed?',
                     ['exception' => get_class($e) . ': ' . $e->getMessage()]
                 );
-                self::$likedCache[$aid][$did] = [];
-                return false;
             }
+
+            $this->likedCache[$aid][$did] = $ids;
         }
 
-        return in_array((int) $post->id, self::$likedCache[$aid][$did], true);
+        return in_array((int) $post->id, $this->likedCache[$aid][$did], true);
     }
 
     private function actorHasReplied(User $actor, CommentPost $post): bool
@@ -116,7 +115,7 @@ class HideContent
         $aid = (int) $actor->id;
         $did = (int) $post->discussion_id;
 
-        if (!array_key_exists($did, self::$repliedCache[$aid] ?? [])) {
+        if (!array_key_exists($did, $this->repliedCache[$aid] ?? [])) {
             $replied = false;
             try {
                 $replied = Post::where('user_id', $aid)
@@ -129,10 +128,10 @@ class HideContent
                     ['exception' => get_class($e) . ': ' . $e->getMessage()]
                 );
             }
-            self::$repliedCache[$aid][$did] = $replied;
+            $this->repliedCache[$aid][$did] = $replied;
         }
 
-        return self::$repliedCache[$aid][$did];
+        return $this->repliedCache[$aid][$did];
     }
 
     private function containsHideTags(string $xml): bool

@@ -92,13 +92,14 @@ class Configure
         $config->HTMLElements->allowUnsafeElement('iframe');
         $config->HTMLElements->allowAttribute('iframe', 'src');
 
-        foreach ([
-            'align', 'allow', 'allowpaymentrequest', 'class', 'credentialless', 'csp',
-            'frameborder', 'height', 'id', 'loading', 'longdesc', 'marginheight',
-            'marginwidth', 'name', 'referrerpolicy', 'sandbox', 'scrolling',
-            'style', 'title', 'width',
-        ] as $attr) {
-            $config->HTMLElements->allowUnsafeAttribute('iframe', $attr);
+        // Only the attributes the [iframe] BBCode template actually sets. These are
+        // plain non-URL, non-event attributes, so allowAttribute() (not
+        // allowUnsafeAttribute()) is sufficient and keeps users who write raw <iframe>
+        // HTML (guarded by the use_iframe permission) from injecting attributes like
+        // allow="camera;microphone", allowpaymentrequest, credentialless, or a
+        // full-viewport style="position:fixed;…" overlay.
+        foreach (['frameborder', 'allowfullscreen', 'loading', 'width', 'height'] as $attr) {
+            $config->HTMLElements->allowAttribute('iframe', $attr);
         }
     }
 
