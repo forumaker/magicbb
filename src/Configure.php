@@ -28,8 +28,10 @@ class Configure
             $this->addAudioBBCode($config);
         }
 
-        $this->enableRawVideo($config);
-        $this->addVideoBBCode($config);
+        if ($s('bb_video')) {
+            $this->enableRawVideo($config);
+            $this->addVideoBBCode($config);
+        }
 
         if ($s('bb_info')) {
             $this->addAlert($config, 'info');

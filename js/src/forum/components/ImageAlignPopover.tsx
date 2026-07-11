@@ -1,5 +1,4 @@
 import Component from 'flarum/common/Component';
-import app from 'flarum/forum/app';
 
 const CHOICES = [
   { key: 'left',   icon: 'fas fa-align-left',   title: 'Left' },
@@ -53,8 +52,7 @@ export default class ImageAlignPopover extends Component {
   view(vnode) {
     const label = vnode.attrs.label || 'Image';
     const onPick = vnode.attrs.onPick || function () {};
-    const settingIcon = app.forum.attribute('forumaker-magicbb.icon_image');
-    const icon = settingIcon || vnode.attrs.icon || 'fas fa-images';
+    const icon = vnode.attrs.icon || 'fas fa-images';
 
     const trigger = m('button.Button.Button--icon',
       {

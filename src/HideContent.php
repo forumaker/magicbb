@@ -35,19 +35,18 @@ class HideContent
             return $xml;
         }
 
+        // No request context (email notification rendering, CLI commands, queue
+        // jobs, …) means we can't identify an actor. Treat this conservatively as
+        // an unauthenticated/guest context rather than leaking the gated content.
         if ($request === null) {
-            return $xml;
+            return $this->redactAsGuest($xml);
         }
 
         $actor = RequestUtil::getActor($request);
         $post  = $context;
 
         if ($actor->isGuest()) {
-            $msg = $this->translator->trans('forumaker-magicbb.forum.hide.login_to_see_simple');
-            $xml = $this->hideTag($xml, 'LOGIN', $msg);
-            $xml = $this->hideTag($xml, 'LIKE',  $msg);
-            $xml = $this->hideTag($xml, 'REPLY', $msg);
-            return $xml;
+            return $this->redactAsGuest($xml);
         }
 
         $xml = $this->revealTag($xml, 'LOGIN');
@@ -75,6 +74,16 @@ class HideContent
                     : $this->hideTag($xml, 'REPLY', $this->translator->trans('forumaker-magicbb.forum.hide.reply_to_see_simple'));
             }
         }
+
+        return $xml;
+    }
+
+    private function redactAsGuest(string $xml): string
+    {
+        $msg = $this->translator->trans('forumaker-magicbb.forum.hide.login_to_see_simple');
+        $xml = $this->hideTag($xml, 'LOGIN', $msg);
+        $xml = $this->hideTag($xml, 'LIKE',  $msg);
+        $xml = $this->hideTag($xml, 'REPLY', $msg);
 
         return $xml;
     }

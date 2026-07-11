@@ -2,8 +2,6 @@
 
 namespace forumaker\MagicBB;
 
-use forumaker\MagicBB\FixAnchorCollision;
-use forumaker\MagicBB\HideContent;
 use forumaker\MagicBB\Listener\AssertIframePermission;
 use Flarum\Extend;
 use Flarum\Post\Event\Saving as PostSaving;
@@ -33,6 +31,7 @@ return [
         ->default('forumaker-magicbb.bb_info', '1')
         ->default('forumaker-magicbb.bb_audio', '1')
         ->default('forumaker-magicbb.bb_image', '1')
+        ->default('forumaker-magicbb.bb_video',  '1')
         ->default('forumaker-magicbb.bb_iframe', '1')
         ->default('forumaker-magicbb.bb_hide_login', '1')
         ->default('forumaker-magicbb.bb_hide_reply', '1')
@@ -61,6 +60,7 @@ return [
         ->serializeToForum('bb_info',       'forumaker-magicbb.bb_info',       'boolval')
         ->serializeToForum('bb_audio',      'forumaker-magicbb.bb_audio',      'boolval')
         ->serializeToForum('bb_image',      'forumaker-magicbb.bb_image',      'boolval')
+        ->serializeToForum('bb_video',      'forumaker-magicbb.bb_video',      'boolval')
         ->serializeToForum('bb_iframe',     'forumaker-magicbb.bb_iframe',     'boolval')
         ->serializeToForum('bb_hide_login', 'forumaker-magicbb.bb_hide_login', 'boolval')
         ->serializeToForum('bb_hide_reply', 'forumaker-magicbb.bb_hide_reply', 'boolval')

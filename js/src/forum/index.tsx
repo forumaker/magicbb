@@ -495,18 +495,22 @@ app.initializers.add('forumaker-magicbb-buttons', () => {
 });
 
 app.initializers.add('forumaker-magicbb-live-reveal', () => {
-  // Track in-flight refetches so a like and a reply landing close together don't
-  // trigger duplicate requests for the same post.
+  // Track in-flight refetches so overlapping saves don't trigger duplicate
+  // requests for the same post.
   const pending = new Set<string>();
 
-  function refetchPost(id: string) {
-    if (pending.has(id)) return;
-    pending.add(id);
+  // Batch every post that needs re-rendering into a single request instead of
+  // firing one GET per gated post visible in the DOM.
+  function refetchPosts(ids: string[]) {
+    const toFetch = ids.filter((id) => !pending.has(id));
+    if (!toFetch.length) return;
+
+    toFetch.forEach((id) => pending.add(id));
     app.store
-      .find('posts', id)
+      .find('posts', { filter: { id: toFetch.join(',') } })
       .then(() => m.redraw())
       .catch(() => {})
-      .finally(() => pending.delete(id));
+      .finally(() => toFetch.forEach((id) => pending.delete(id)));
   }
 
   // Hook Post.prototype.save directly instead of the app-wide request pipeline:
@@ -520,16 +524,20 @@ app.initializers.add('forumaker-magicbb-live-reveal', () => {
       const id = this.id ? String(this.id()) : null;
       if (!id) return;
 
+      const ids = new Set<string>();
+
       // The post that was just liked may need its own hidden content re-rendered.
       if (document.querySelector(`[data-id="${id}"] .bb-hide`)) {
-        refetchPost(id);
+        ids.add(id);
       }
 
       // A new reply can unlock [reply]-gated content on other visible posts.
       document.querySelectorAll('[data-id] .bb-hide--reply').forEach((el) => {
         const pid = el.closest('[data-id]')?.getAttribute('data-id');
-        if (pid) refetchPost(pid);
+        if (pid) ids.add(pid);
       });
+
+      if (ids.size) refetchPosts(Array.from(ids));
     });
   });
 });

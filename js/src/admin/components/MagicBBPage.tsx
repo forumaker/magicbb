@@ -121,6 +121,13 @@ export default class MagicBBPage extends ExtensionPage {
             <div className="Form-group">
               {this.buildSettingComponent({
                 type: 'boolean',
+                setting: 'forumaker-magicbb.bb_video',
+                label: app.translator.trans('forumaker-magicbb.admin.settings.bb_video'),
+              })}
+            </div>,
+            <div className="Form-group">
+              {this.buildSettingComponent({
+                type: 'boolean',
                 setting: 'forumaker-magicbb.bb_anchor',
                 label: app.translator.trans('forumaker-magicbb.admin.settings.bb_anchor'),
                 help: app.translator.trans('forumaker-magicbb.admin.settings.bb_anchor_help'),
