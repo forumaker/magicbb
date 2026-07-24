@@ -1,4 +1,4 @@
-import Component from 'flarum/common/Component';
+import PopoverBase from './PopoverBase';
 
 const CHOICES = [
   { key: 'left',   icon: 'fas fa-align-left',   title: 'Left' },
@@ -6,49 +6,7 @@ const CHOICES = [
   { key: 'right',  icon: 'fas fa-align-right',  title: 'Right' },
 ];
 
-export default class ImageAlignPopover extends Component {
-  oninit() {
-    this.isOpen = false;
-    this.anchor = null;
-    this.popover = null;
-
-    this._onDocClick = (e) => {
-      if (!this.isOpen) return;
-      const pop = this.popover;
-      const anc = this.anchor;
-      if (!pop || !anc) return;
-      if (!pop.contains(e.target) && !anc.contains(e.target)) this.close();
-    };
-
-    this._onKey = (e) => {
-      if (e.key === 'Escape') this.close();
-    };
-  }
-
-  onremove() {
-    document.removeEventListener('mousedown', this._onDocClick);
-    document.removeEventListener('keydown', this._onKey);
-  }
-
-  open() {
-    if (this.isOpen) return;
-    this.isOpen = true;
-    document.addEventListener('mousedown', this._onDocClick);
-    document.addEventListener('keydown', this._onKey);
-  }
-
-  close() {
-    if (!this.isOpen) return;
-    this.isOpen = false;
-    document.removeEventListener('mousedown', this._onDocClick);
-    document.removeEventListener('keydown', this._onKey);
-    m.redraw();
-  }
-
-  toggle() {
-    this.isOpen ? this.close() : this.open();
-  }
-
+export default class ImageAlignPopover extends PopoverBase {
   view(vnode) {
     const label = vnode.attrs.label || 'Image';
     const onPick = vnode.attrs.onPick || function () {};
@@ -71,23 +29,12 @@ export default class ImageAlignPopover extends Component {
       m('i', { className: 'icon ' + icon, 'aria-hidden': 'true' })
     );
 
-    let style = null;
-    if (this.isOpen && this.anchor) {
-      const r = this.anchor.getBoundingClientRect();
-      style = {
-        position: 'fixed',
-        left: (r.left + r.width / 2) + 'px',
-        top: r.top + 'px',
-        transform: 'translate(-50%, calc(-100% - 8px))',
-      };
-    }
-
     const popover = this.isOpen
       ? m('div.Magicbb-ImagePopover',
           {
-            style,
-            oncreate: (v) => { this.popover = v.dom; },
-            onremove: () => { this.popover = null; },
+            style: this.anchorStyle(),
+            oncreate: (v) => { this.popoverEl = v.dom; },
+            onremove: () => { this.popoverEl = null; },
           },
           m('div.Magicbb-ImageGrid',
             CHOICES.map((c) =>

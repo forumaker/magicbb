@@ -1,4 +1,4 @@
-import Component from 'flarum/common/Component';
+import PopoverBase from './PopoverBase';
 
 const DEFAULT_COLORS = [
   '#FF4D4D', '#FF8A3D', '#FFD53D', '#22C55E',
@@ -7,47 +7,7 @@ const DEFAULT_COLORS = [
   '#2F3437', '#6B3F2B', '#121212', '#7F1D1D',
 ];
 
-export default class ColorPalettePopover extends Component {
-  oninit() {
-    this.open = false;
-    this.anchor = null;
-
-    this._onDocClick = (e) => {
-      if (!this.open) return;
-      const pop = this.popoverEl;
-      if (!pop) return;
-      if (!pop.contains(e.target) && !this.anchor?.contains(e.target)) this.close();
-    };
-
-    this._onKey = (e) => {
-      if (e.key === 'Escape') this.close();
-    };
-  }
-
-  onremove() {
-    document.removeEventListener('mousedown', this._onDocClick);
-    document.removeEventListener('keydown', this._onKey);
-  }
-
-  toggle() {
-    this.open = !this.open;
-    if (this.open) {
-      document.addEventListener('mousedown', this._onDocClick);
-      document.addEventListener('keydown', this._onKey);
-    } else {
-      document.removeEventListener('mousedown', this._onDocClick);
-      document.removeEventListener('keydown', this._onKey);
-    }
-  }
-
-  close() {
-    if (!this.open) return;
-    this.open = false;
-    document.removeEventListener('mousedown', this._onDocClick);
-    document.removeEventListener('keydown', this._onKey);
-    m.redraw();
-  }
-
+export default class ColorPalettePopover extends PopoverBase {
   view(vnode) {
     const { label, colors = DEFAULT_COLORS, onSelect } = vnode.attrs;
     const icon = vnode.attrs.icon || 'fas fa-palette';
@@ -57,7 +17,7 @@ export default class ColorPalettePopover extends Component {
         type: 'button',
         'aria-label': label,
         'aria-haspopup': 'dialog',
-        'aria-expanded': String(this.open),
+        'aria-expanded': String(this.isOpen),
         style: 'background:transparent;box-shadow:none;transform:none;',
         onclick: (e) => {
           e.preventDefault();
@@ -69,24 +29,13 @@ export default class ColorPalettePopover extends Component {
       m('i', { className: `icon ${icon}`, 'aria-hidden': 'true' })
     );
 
-    let style = null;
-    if (this.open && this.anchor) {
-      const r = this.anchor.getBoundingClientRect();
-      style = {
-        position: 'fixed',
-        left: `${r.left + r.width / 2}px`,
-        top: `${r.top}px`,
-        transform: 'translate(-50%, calc(-100% - 8px))',
-      };
-    }
-
     return m.fragment({ key: 'magicbb-color' }, [
       trigger,
-      this.open &&
+      this.isOpen &&
         m(
           'div.Magicbb-ColorPopover',
           {
-            style,
+            style: this.anchorStyle(),
             oncreate: (v) => (this.popoverEl = v.dom),
             onremove: () => (this.popoverEl = null),
           },

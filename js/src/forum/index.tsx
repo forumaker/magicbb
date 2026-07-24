@@ -509,7 +509,12 @@ app.initializers.add('forumaker-magicbb-live-reveal', () => {
     app.store
       .find('posts', { filter: { id: toFetch.join(',') } })
       .then(() => m.redraw())
-      .catch(() => {})
+      .catch((e) => {
+        // Keep the failure visible in the console instead of swallowing it,
+        // and redraw so the UI does not stay in a half-updated state.
+        console.warn('magicbb: live-reveal refetch failed', e);
+        m.redraw();
+      })
       .finally(() => toFetch.forEach((id) => pending.delete(id)));
   }
 

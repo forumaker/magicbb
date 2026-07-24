@@ -1,4 +1,4 @@
-import Component from 'flarum/common/Component';
+import PopoverBase from './PopoverBase';
 
 const ALERTS = [
   { key: 'info',    icon: 'fas fa-circle-info',          font: '#1E2019', bg: '#B8D3D1', border: '#B8D3D1' },
@@ -7,46 +7,7 @@ const ALERTS = [
   { key: 'error',   icon: 'fas fa-xmark',               font: '#1E2019', bg: '#DF817C', border: '#DF817C' },
 ];
 
-export default class AlertPickerPopover extends Component {
-  oninit() {
-    this.open = false;
-    this.anchor = null;
-
-    this._onDocClick = (e) => {
-      if (!this.open) return;
-      const pop = this.popoverEl;
-      if (!pop) return;
-      if (!pop.contains(e.target) && !this.anchor?.contains(e.target)) this.close();
-    };
-    this._onKey = (e) => { if (e.key === 'Escape') this.close(); };
-  }
-
-  onremove() {
-    document.removeEventListener('mousedown', this._onDocClick);
-    document.removeEventListener('keydown', this._onKey);
-  }
-
-  toggle() {
-    this.open = !this.open;
-    const add = document.addEventListener.bind(document);
-    const rm  = document.removeEventListener.bind(document);
-    if (this.open) {
-      add('mousedown', this._onDocClick);
-      add('keydown', this._onKey);
-    } else {
-      rm('mousedown', this._onDocClick);
-      rm('keydown', this._onKey);
-    }
-  }
-
-  close() {
-    if (!this.open) return;
-    this.open = false;
-    document.removeEventListener('mousedown', this._onDocClick);
-    document.removeEventListener('keydown', this._onKey);
-    m.redraw();
-  }
-
+export default class AlertPickerPopover extends PopoverBase {
   view(vnode) {
     const { label, onSelect } = vnode.attrs;
     const icon = vnode.attrs.icon || 'fas fa-circle-exclamation';
@@ -56,7 +17,7 @@ export default class AlertPickerPopover extends Component {
         type: 'button',
         'aria-label': label,
         'aria-haspopup': 'dialog',
-        'aria-expanded': String(this.open),
+        'aria-expanded': String(this.isOpen),
         style: 'background:transparent;box-shadow:none;transform:none;',
         onclick: (e) => { e.preventDefault(); this.toggle(); e.currentTarget.blur(); },
         oncreate: (v) => (this.anchor = v.dom),
@@ -64,18 +25,12 @@ export default class AlertPickerPopover extends Component {
       m('i', { className: `icon ${icon}`, 'aria-hidden': 'true' })
     );
 
-    let style = null;
-    if (this.open && this.anchor) {
-      const r = this.anchor.getBoundingClientRect();
-      style = { position: 'fixed', left: `${r.left + r.width / 2}px`, top: `${r.top}px`, transform: 'translate(-50%, calc(-100% - 8px))' };
-    }
-
     return m.fragment({ key: 'magicbb-alert' }, [
       trigger,
-      this.open &&
+      this.isOpen &&
         m('div.Magicbb-AlertPopover',
           {
-            style,
+            style: this.anchorStyle(),
             oncreate: (v) => (this.popoverEl = v.dom),
             onremove: () => (this.popoverEl = null),
           },
