@@ -1,7 +1,7 @@
 # ✨ MagicBB for Flarum
 Adds handy buttons, extra BBCodes and new text formatting styles. **Supports Flarum 1.x and 2.x**
 
-![License](https://img.shields.io/badge/license-MIT-blue) ![Packagist Version](https://img.shields.io/packagist/v/forumaker/magicbb) ![Downloads](https://img.shields.io/packagist/dt/forumaker/magicbb) ![Review](https://floxum.com/extension/forumaker/magicbb/badge/review-score)
+![License](https://img.shields.io/badge/license-MIT-blue) ![Packagist Version](https://img.shields.io/packagist/v/forumaker/magicbb) ![Downloads](https://img.shields.io/packagist/dt/forumaker/magicbb)
 
 ## 🚀 Features
 - 🖊️ Adds composer toolbar buttons  
