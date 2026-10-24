@@ -12,22 +12,21 @@ import AlertPickerPopover from './components/AlertPickerPopover';
 import ImageAlignPopover from './components/ImageAlignPopover';
 import MoreButtonsPopover from './components/MoreButtonsPopover';
 
-function elOf(ctx) {
+function elOf(ctx: any) {
   return ctx?.attrs?.composer?.editor?.el || null;
 }
-function edOf(ctx) {
+function edOf(ctx: any) {
   return ctx?.attrs?.composer?.editor || null;
 }
-function on(key) {
+function on(key: any) {
   const v = app.forum.attribute(key);
   return v === undefined || v === null ? true : !!v;
 }
-function iconOf(name, fallback) {
+function iconOf(name: any, fallback: any) {
   return app.forum.attribute(`icon_${name}`) || fallback;
 }
-function findFoFTagAroundSelection(node) {
-  const re =
-    /\[upl-image-preview(?:(?!]).)*?\burl=(?:"[^"]+"|'[^']+'|[^\s\]]+)(?:(?!]).)*?](?:\s*\[\/upl-image-preview])?/i;
+function findFoFTagAroundSelection(node: any) {
+  const re = /\[upl-image-preview(?:(?!]).)*?\burl=(?:"[^"]+"|'[^']+'|[^\s\]]+)(?:(?!]).)*?](?:\s*\[\/upl-image-preview])?/i;
   const start = Math.max(0, node.selectionStart - 800);
   const end = Math.min(node.value.length, node.selectionEnd + 800);
   const slice = node.value.slice(start, end);
@@ -37,7 +36,7 @@ function findFoFTagAroundSelection(node) {
   const absEnd = absStart + m[0].length;
   return { start: absStart, end: absEnd, text: m[0] };
 }
-function replaceRange(node, from, to, text) {
+function replaceRange(node: any, from: any, to: any, text: any) {
   node.setRangeText(text, from, to, 'end');
   node.dispatchEvent(new Event('input', { bubbles: true }));
 }
@@ -62,9 +61,7 @@ function replaceRangeUnified(node: any, ed: any, start: number, end: number, tex
 class MagicbbBtn extends Component<{ title: string; icon: string; onclick: (e: any) => void }> {
   view() {
     const { title, icon, onclick } = this.attrs;
-    const button = m('button.Button.Button--icon.Button--link', { type: 'button', onclick },
-      m(Icon, { name: icon })
-    );
+    const button = m('button.Button.Button--icon.Button--link', { type: 'button', onclick }, m(Icon, { name: icon }));
     return m(Tooltip, { text: title }, button);
   }
 }
@@ -77,8 +74,8 @@ app.initializers.add('forumaker-magicbb-buttons', () => {
 
     const pool = [];
 
-    const addBtn = (key, icon, title, style, prio, defaultText = '') => {
-      const handler = (e) => {
+    const addBtn = (key: any, icon: any, title: any, style: any, prio: any, defaultText = '') => {
+      const handler = (e: any) => {
         e?.preventDefault?.();
         const node = el();
         const ed = editor();
@@ -103,7 +100,7 @@ app.initializers.add('forumaker-magicbb-buttons', () => {
         if (!hasSelection && defaultText) {
           ed.insertAtCursor((style.prefix || '') + defaultText + (style.suffix || ''));
         } else {
-          styleSelectedText(node, style);
+          styleSelectedText(node, style as any);
         }
       };
 
@@ -117,8 +114,8 @@ app.initializers.add('forumaker-magicbb-buttons', () => {
       });
     };
 
-    const addWrapBlockBtn = (key, icon, title, tag, prio) => {
-      const handler = (e) => {
+    const addWrapBlockBtn = (key: any, icon: any, title: any, tag: any, prio: any) => {
+      const handler = (e: any) => {
         e?.preventDefault?.();
         const node = el();
         const ed = editor();
@@ -214,7 +211,7 @@ app.initializers.add('forumaker-magicbb-buttons', () => {
         if (!node) return;
         const hasSelection = node.selectionStart !== node.selectionEnd;
         if (!hasSelection) ed.insertAtCursor(`${prefix}Heading${suffix}`);
-        else styleSelectedText(node, { prefix, suffix });
+        else styleSelectedText(node, { prefix, suffix } as any);
       };
 
       pool.push({
@@ -246,12 +243,11 @@ app.initializers.add('forumaker-magicbb-buttons', () => {
     if (on('bb_table')) {
       const title = app.translator.trans('forumaker-magicbb.forum.composer.table_button');
       const tableIcon = iconOf('table', 'fas fa-table');
-      const handler = (e) => {
+      const handler = (e: any) => {
         e?.preventDefault?.();
         const ed = editor();
         if (!ed?.insertAtCursor) return;
-        const tpl =
-          '| Heading 1 | Heading 2 | Heading 3 |\n|---|---|---|\n| Cell 1 | Cell 2 | Cell 3 |\n| Cell 4 | Cell 5 | Cell 6 |';
+        const tpl = '| Heading 1 | Heading 2 | Heading 3 |\n|---|---|---|\n| Cell 1 | Cell 2 | Cell 3 |\n| Cell 4 | Cell 5 | Cell 6 |';
         ed.insertAtCursor(tpl, true);
       };
 
@@ -292,7 +288,7 @@ app.initializers.add('forumaker-magicbb-buttons', () => {
         if (!node) return;
         const hasSelection = node.selectionStart !== node.selectionEnd;
         if (!hasSelection) ed.insertAtCursor(`${prefix}Subtitle${suffix}`);
-        else styleSelectedText(node, { prefix, suffix });
+        else styleSelectedText(node, { prefix, suffix } as any);
       };
 
       pool.push({
@@ -314,7 +310,7 @@ app.initializers.add('forumaker-magicbb-buttons', () => {
       const title = app.translator.trans('forumaker-magicbb.forum.composer.audio_button');
       const audioIcon = iconOf('audio', 'fas fa-music');
 
-      const handler = (e) => {
+      const handler = (e: any) => {
         e?.preventDefault?.();
         const node = el();
         const ed = editor();
@@ -361,8 +357,7 @@ app.initializers.add('forumaker-magicbb-buttons', () => {
         if (!ed) return;
 
         const wrap = (tag: string) => ({ prefix: `[${tag}]`, suffix: `[/${tag}]` });
-        const style =
-          align === 'left' ? wrap('ileft') : align === 'right' ? wrap('iright') : wrap('icenter');
+        const style = align === 'left' ? wrap('ileft') : align === 'right' ? wrap('iright') : wrap('icenter');
 
         if (isTiptap(ed)) {
           const [start, end] = ed.getSelectionRange();
@@ -379,7 +374,7 @@ app.initializers.add('forumaker-magicbb-buttons', () => {
         const hasSelection = node.selectionStart !== node.selectionEnd;
 
         if (hasSelection) {
-          styleSelectedText(node, style);
+          styleSelectedText(node, style as any);
           return;
         }
 
@@ -440,11 +435,11 @@ app.initializers.add('forumaker-magicbb-buttons', () => {
 
     if (on('bb_anchor')) {
       const anchorTitle = app.translator.trans('forumaker-magicbb.forum.composer.anchor_button');
-      const anchorIcon  = iconOf('anchor', 'fas fa-anchor');
+      const anchorIcon = iconOf('anchor', 'fas fa-anchor');
       const anchorHandler = (e: any) => {
         e?.preventDefault?.();
         const node = el();
-        const ed   = editor();
+        const ed = editor();
         if (!ed?.insertAtCursor) return;
         if (isTiptap(ed)) {
           ed.insertAtCursor('[anchor=name]', true);
@@ -475,7 +470,7 @@ app.initializers.add('forumaker-magicbb-buttons', () => {
     pool.sort((a, b) => b.prio - a.prio);
 
     if (grouped) {
-      const menuItems = pool.map((p) => ('asMenuSub' in p ? p.asMenuSub() : p.asMenu()));
+      const menuItems = pool.map((p) => ('asMenuSub' in p ? p.asMenuSub!() : p.asMenu!()));
 
       const moreIcon = iconOf('more', 'fas fa-wand-sparkles');
 

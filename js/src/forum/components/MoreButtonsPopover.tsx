@@ -1,6 +1,7 @@
 import Component from 'flarum/common/Component';
 import Button from 'flarum/common/components/Button';
 import Tooltip from 'flarum/common/components/Tooltip';
+import type Mithril from 'mithril';
 
 type PlainAction = {
   key: string;
@@ -113,7 +114,9 @@ export default class MoreButtonsPopover extends Component<{ items: MenuItem[]; l
     );
   }
 
-  private toggle() { this.open ? this.close() : this.openPopover(); }
+  private toggle() {
+    this.open ? this.close() : this.openPopover();
+  }
 
   private openPopover() {
     this.open = true;
@@ -164,9 +167,7 @@ export default class MoreButtonsPopover extends Component<{ items: MenuItem[]; l
 
     const target = ev.target as Node;
     const moreRoot = this.element as HTMLElement | null;
-    const nativePopover = document.querySelector(
-      '.Magicbb-ColorPopover, .Magicbb-AlertPopover, .Magicbb-ImagePopover'
-    ) as HTMLElement | null;
+    const nativePopover = document.querySelector('.Magicbb-ColorPopover, .Magicbb-AlertPopover, .Magicbb-ImagePopover') as HTMLElement | null;
 
     const insideMore = !!moreRoot && moreRoot.contains(target);
     const insideNative = !!nativePopover && nativePopover.contains(target);
@@ -179,9 +180,7 @@ export default class MoreButtonsPopover extends Component<{ items: MenuItem[]; l
     if (!this.open) return;
 
     const target = ev.target as Node;
-    const nativePopover = document.querySelector(
-      '.Magicbb-ColorPopover, .Magicbb-AlertPopover, .Magicbb-ImagePopover'
-    ) as HTMLElement | null;
+    const nativePopover = document.querySelector('.Magicbb-ColorPopover, .Magicbb-AlertPopover, .Magicbb-ImagePopover') as HTMLElement | null;
 
     if (nativePopover && nativePopover.contains(target)) {
       requestAnimationFrame(() => this.close());
